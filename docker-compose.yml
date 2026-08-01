@@ -1,0 +1,38 @@
+version: "3.8"
+
+services:
+  # Service 1: The Database
+  database:
+    image: mongo:7.0 # Download official MongoDB image from Docker Hub
+    container_name: mongodb-container
+    ports:
+      - "27017:27017" # Map Host Port 27017 -> Container Port 27017
+    volumes:
+      - mongo_data:/data/db # Keep database data saved on host machine
+    networks:
+      - todo-network
+
+  # Service 2: Your Node.js App
+  web:
+    build: . # Build the Dockerfile in current directory
+    container_name: nodejs-container
+    ports:
+      - "3000:3000" # Map Host Port 3000 -> Container Port 3000
+    environment:
+      - DB_HOST=database # Must match the database service name above!
+      - DB_PORT=27017
+      - DB_NAME=tododb
+      - PORT=3000
+    depends_on:
+      - database # Start 'database' service before starting 'web'
+    networks:
+      - todo-network
+
+# Permanent Storage configuration
+volumes:
+  mongo_data:
+
+# Internal Private Network configuration
+networks:
+  todo-network:
+    driver: bridge
