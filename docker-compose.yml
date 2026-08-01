@@ -10,7 +10,9 @@ services:
       - todo-network
 
   web:
-    build: .
+    build:
+      context: .
+      target: builder # Uses Stage 1 (builder) for local development with devDependencies
     container_name: nodejs-container
     ports:
       - "3000:3000"

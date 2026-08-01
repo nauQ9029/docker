@@ -1,20 +1,59 @@
-# Step 1: Use an official light-weight Node.js image as the foundation
-FROM node:20-alpine
+# ┌─────────────────────────────────────────┐
+# │ STAGE 1: builder (node:20-alpine)       │
+# │                                         │
+# │  • npm install (dev + prod deps)        │
+# │  • Full source code & build tools       │
+# └────────────────────┬────────────────────┘
+#                      │
+#                      │ COPY --from=builder /usr/src/app/server.js
+#                      ▼
+# ┌─────────────────────────────────────────┐
+# │ STAGE 2: production (node:20-alpine)   │
+# │                                         │
+# │  • npm ci --only=production             │
+# │  • ONLY server.js copied over           │
+# │  • Runs as non-root ('USER node')       │
+# └─────────────────────────────────────────┘
 
-# Step 2: Set the folder inside the container where commands will run
+# ==========================================
+# STAGE 1: Build & Dependencies (Development / Build Environment)
+# ==========================================
+FROM node:20-alpine AS builder
+
 WORKDIR /usr/src/app
 
-# Step 3: Copy dependency files first (optimizes Docker build caching)
 COPY package*.json ./
 
-# Step 4: Install the Node modules inside the container
 RUN npm install
 
-# Step 5: Copy the rest of your app's code into the container
 COPY . .
 
-# Step 6: Document that this container listens on port 3000
 EXPOSE 3000
 
-# Step 7: Run nodemon dev script instead of npm start
+# Start the application in development mode using nodemon
 CMD ["npm", "run", "dev"]
+
+# ==========================================
+# STAGE 2: Production (Tiny, Secure Runtime)
+# ==========================================
+FROM node:20-alpine AS production
+
+WORKDIR /usr/src/app
+
+# Set production environment flag
+ENV NODE_ENV=production
+
+# Copy package files and install ONLY production dependencies
+COPY package*.json ./
+RUN npm ci --only=production
+
+# Copy application code from builder stage
+COPY --from=builder /usr/src/app/server.js ./server.js
+
+# Use non-root user for security
+USER node
+
+EXPOSE 3000
+
+# Start the application in production mode
+CMD ["node", "server.js"]
