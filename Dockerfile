@@ -16,5 +16,5 @@ COPY . .
 # Step 6: Document that this container listens on port 3000
 EXPOSE 3000
 
-# Step 7: Command to run when the container starts
-CMD ["npm", "start"]
+# Step 7: Run nodemon dev script instead of npm start
+CMD ["npm", "run", "dev"]

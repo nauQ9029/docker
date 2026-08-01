@@ -34,7 +34,7 @@ app.get('/todos', async (req, res) => {
 // Endpoint 2: Add a new todo
 app.post('/todos', async (req, res) => {
   try {
-    const newTodo = new Todo({ text: req.body.text });
+    const newTodo = new Todo({ text: req.body.text3 });
     await newTodo.save();
     res.status(201).json(newTodo);
   } catch (err) {
